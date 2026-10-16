@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+
+  <style>
+
+    body{
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    input, button, select{
+      width:100%;
+      padding:12px;
+      margin-bottom:10px;
+      box-sizing:border-box;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    .menu{
+      margin-top:20px;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="app">
+
+    <h2>Control de Asistencia GPS 3</h2>
+
+    <input
+      type="text"
+      id="usuario"
+      placeholder="Usuario">
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Contraseña">
+
+    <button onclick="ingresar()">
+      Ingresar
+    </button>
+
+    <div id="resultado"></div>
+
+  </div>
+
+  <script>
+
+    function ingresar(){
+
+      const usuario =
+        document.getElementById("usuario").value;
+
+      const password =
+        document.getElementById("password").value;
+
+      google.script.run
+
+        .withSuccessHandler(function(res){
+
+          if(!res.success){
+
+            document.getElementById(
+              "resultado"
+            ).innerHTML =
+              "Usuario o contraseña incorrectos";
+
+            return;
+
+          }
+
+          if(res.rol === "Admin"){
+
+            cargarVistaAdmin(res);
+
+          }
+          else if(res.rol === "Supervisor"){
+
+            cargarVistaSupervisor(res);
+
+          }
+          else if(res.rol === "Promotor"){
+
+            cargarVistaPromotor(res);
+
+          }
+
+        })
+
+        .withFailureHandler(function(error){
+
+          document.getElementById(
+            "resultado"
+          ).innerHTML =
+            error.message;
+
+        })
+
+        .login(usuario,password);
+
+    }
+
+    function cargarVistaAdmin(usuario){
+
+      document.getElementById("app")
+      .innerHTML = `
+
+        <h2>Administrador</h2>
+
+        <p>
+          Bienvenido ${usuario.nombre}
+        </p>
+
+        <div class="menu">
+
+          <button onclick="listarUsuarios()">
+            Usuarios
+          </button>
+
+          <button onclick="listarSedes()">
+            Sedes
+          </button>
+
+          <button onclick="listarAsignaciones()">
+            Asignaciones
+          </button>
+
+        </div>
+
+        <hr>
+
+        <div id="contenido"></div>
+
+      `;
+
+    }
+
+    function listarUsuarios(){
+
+      google.script.run
+
+        .withSuccessHandler(function(data){
+
+          let html =
+            "<h3>Usuarios</h3>";
+
+          html += "<ul>";
+
+          for(let i=1;i<data.length;i++){
+
+            html += `
+              <li>
+                ${data[i][1]}
+                (${data[i][4]})
+              </li>
+            `;
+
+          }
+
+          html += "</ul>";
+
+          document.getElementById(
+            "contenido"
+          ).innerHTML = html;
+
+        })
+
+        .obtenerUsuarios();
+
+    }
+
+    function listarSedes(){
+
+      google.script.run
+
+        .withSuccessHandler(function(data){
+
+          let html =
+            "<h3>Sedes</h3>";
+
+          html += "<ul>";
+
+          for(let i=1;i<data.length;i++){
+
+            html += `
+              <li>
+                ${data[i][1]}
+              </li>
+            `;
+
+          }
+
+          html += "</ul>";
+
+          document.getElementById(
+            "contenido"
+          ).innerHTML = html;
+
+        })
+
+        .obtenerSedes();
+
+    }
+
+    function listarAsignaciones(){
+
+      document.getElementById(
+        "contenido"
+      ).innerHTML =
+        "<h3>Asignaciones</h3>";
+
+    }
+
+    function cargarVistaSupervisor(usuario){
+
+      document.getElementById("app")
+      .innerHTML = `
+
+        <h2>Supervisor</h2>
+
+        <p>
+          Bienvenido ${usuario.nombre}
+        </p>
+
+        <div id="contenido">
+          Cargando sedes...
+        </div>
+
+      `;
+
+      google.script.run
+
+        .withSuccessHandler(function(data){
+
+          document.getElementById(
+            "contenido"
+          ).innerHTML =
+            JSON.stringify(data);
+
+        })
+
+        .obtenerTodasLasSedes();
+
+    }
+
+    function cargarVistaPromotor(usuario){
+
+      document.getElementById("app")
+      .innerHTML = `
+
+        <h2>Promotor</h2>
+
+        <p>
+          Bienvenido ${usuario.nombre}
+        </p>
+
+        <div id="contenido">
+          Cargando sedes...
+        </div>
+
+      `;
+
+      google.script.run
+
+        .withSuccessHandler(function(data){
+
+          document.getElementById(
+            "contenido"
+          ).innerHTML =
+            JSON.stringify(data);
+
+        })
+
+        .obtenerSedesPromotor(
+          usuario.id
+        );
+
+    }
+
+  </script>
+
+</body>
+
+</html>
